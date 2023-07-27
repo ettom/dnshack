@@ -1,0 +1,29 @@
+name: Build binaries
+on: [push, workflow_dispatch]
+
+jobs:
+  cachix:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          submodules: 'true'
+
+      - name: Install nix
+        uses: cachix/install-nix-action@v20
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+
+      - name: Build dnshackresolver
+        run: |
+          nix-build --log-format bar-with-logs ./dnshackresolver
+
+      - run: echo "UPLOAD_PATH=$(readlink -f result)" >> $GITHUB_ENV
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: dnshackresolver-bin
+          path: ${{ env.UPLOAD_PATH }}
